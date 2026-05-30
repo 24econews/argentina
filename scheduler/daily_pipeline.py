@@ -2,6 +2,7 @@
 
 import logging
 import os
+import subprocess
 import sys
 from datetime import date, datetime
 
@@ -19,6 +20,7 @@ from generation.digest_builder import build_digest
 from ingestion.rss_fetcher import fetch_all_feeds
 from processing.relevance_filter import filter_articles
 from processing.summarizer import summarize_articles
+from processing.translator import translate_digest
 from publishing.publisher import publish_digest
 
 logging.basicConfig(
@@ -91,8 +93,31 @@ def run_pipeline() -> None:
     output_dir = digest_cfg.get("output_dir", "digests/")
     path = publish_digest(digest_md, today, output_dir)
 
+    # --- Translate to English ---
+    en_path = path.replace(".md", ".en.md")
+    try:
+        logger.info("Translating digest to English…")
+        en_md = translate_digest(digest_md, client)
+        with open(en_path, "w", encoding="utf-8") as f:
+            f.write(en_md)
+        logger.info(f"English digest saved to {en_path}")
+    except Exception as exc:
+        logger.error(f"Translation failed — skipping English digest: {exc}")
+        en_path = None
+
     logger.info(f"=== Pipeline complete — digest at {path} ===")
     conn.close()
+
+    # --- Push to GitHub ---
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    commit_msg = f"Daily digest {today.isoformat()}"
+    try:
+        subprocess.run(["git", "add", "digests/"], cwd=repo_root, check=True)
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=repo_root, check=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd=repo_root, check=True)
+        logger.info("Digest pushed to GitHub")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Git push failed: {e}")
 
 
 def main() -> None:
