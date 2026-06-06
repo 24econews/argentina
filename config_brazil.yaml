@@ -1,0 +1,25 @@
+rss_feeds:
+  - name: Folha de S.Paulo
+    url: https://feeds.folha.uol.com.br/mercado/rss091.xml
+  - name: G1 Economia
+    url: https://g1.globo.com/rss/g1/economia/
+  - name: G1 Mercados
+    url: https://g1.globo.com/rss/g1/economia/mercados/
+  - name: InfoMoney
+    url: https://www.infomoney.com.br/feed/
+  - name: Exame
+    url: https://exame.com/feed/
+  - name: UOL Economia
+    url: https://rss.uol.com.br/feed/economia.xml
+  - name: Brazil Journal
+    url: https://braziljournal.com/negocios/feed/
+
+country:
+  slug: brazil
+  name: Brasil
+  digest_header: "Digest Econômico Brasil"
+
+digest:
+  max_articles: 10
+  output_dir: digests/brazil/
+  db_path: economy_brazil.db
