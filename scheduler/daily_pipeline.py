@@ -13,7 +13,9 @@ import time
 import yaml
 from dotenv import load_dotenv
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+sys.path.insert(0, os.path.dirname(SCRIPT_DIR))
 
 from db.storage import init_db, get_known_urls, save_articles, save_summary
 from generation.digest_builder import build_digest
@@ -77,6 +79,8 @@ COUNTRY_SETTINGS: dict = {
 # ---------------------------------------------------------------------------
 
 def load_config(path: str) -> dict:
+    if not os.path.isabs(path):
+        path = os.path.join(SCRIPT_DIR, '..', path)
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
@@ -101,6 +105,12 @@ def run_pipeline(country: str = "argentina") -> None:
 
     output_dir = digest_cfg.get("output_dir", f"digests/{country}/")
     db_path = digest_cfg.get("db_path", f"economy_{country}.db")
+
+    repo_root = os.path.join(SCRIPT_DIR, '..')
+    if not os.path.isabs(output_dir):
+        output_dir = os.path.join(repo_root, output_dir)
+    if not os.path.isabs(db_path):
+        db_path = os.path.join(repo_root, db_path)
 
     conn = init_db(db_path)
     client = anthropic.Anthropic(api_key=api_key)
