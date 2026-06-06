@@ -5,7 +5,7 @@ import logging
 import os
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import date
 
 import anthropic
 import schedule
@@ -17,11 +17,10 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 sys.path.insert(0, os.path.dirname(SCRIPT_DIR))
 
-from db.storage import init_db, get_known_urls, save_articles, save_summary
-from generation.digest_builder import build_digest
+from db.storage import init_db, get_known_urls, save_articles
+from generation.digest_builder import build_narrative_digest
 from ingestion.rss_fetcher import fetch_all_feeds
 from processing.relevance_filter import filter_articles
-from processing.summarizer import summarize_articles
 from processing.translator import translate_digest
 
 logging.basicConfig(
@@ -52,27 +51,16 @@ Responda APENAS com um objeto JSON com dois campos:
 
 Exemplo: {"relevant": true, "reason": "Trata sobre a variação do real e seu impacto nas importações"}"""
 
-_BRAZIL_SUMMARIZER_PROMPT = """Você é um analista econômico especializado no Brasil. Sua tarefa é redigir um resumo conciso e objetivo de uma notícia econômica.
-
-O resumo deve:
-- Ter entre 3 e 5 frases
-- Mencionar cifras, percentuais ou dados concretos quando disponíveis
-- Usar um tom neutro e jornalístico
-- Estar escrito em português brasileiro
-- Destacar o impacto econômico principal da notícia
-
-Não inclua frases introdutórias como "Este artigo trata sobre..." — vá direto ao conteúdo."""
-
 COUNTRY_SETTINGS: dict = {
     "argentina": {
         "config_file": "config.yaml",
         "relevance_prompt": None,   # use module default (Argentina/Spanish)
-        "summarizer_prompt": None,  # use module default (Argentina/Spanish)
+        "source_language": "Spanish",
     },
     "brazil": {
         "config_file": "config_brazil.yaml",
         "relevance_prompt": _BRAZIL_RELEVANCE_PROMPT,
-        "summarizer_prompt": _BRAZIL_SUMMARIZER_PROMPT,
+        "source_language": "Portuguese",
     },
 }
 
@@ -86,7 +74,7 @@ def load_config(path: str) -> dict:
 
 
 def run_pipeline(country: str = "argentina") -> None:
-    """Execute the full pipeline: fetch → filter → summarize → store → publish → translate → push."""
+    """Execute the full pipeline: fetch → filter → store → publish → translate → push."""
     if country not in COUNTRY_SETTINGS:
         raise ValueError(f"Unknown country '{country}'. Supported: {list(COUNTRY_SETTINGS)}")
 
@@ -138,35 +126,24 @@ def run_pipeline(country: str = "argentina") -> None:
         filter_kwargs["system_prompt"] = settings["relevance_prompt"]
     relevant = filter_articles(new_articles, client, **filter_kwargs)
     if not relevant:
-        logger.info("No relevant articles found — skipping summarization")
+        logger.info("No relevant articles found — skipping digest generation")
         save_articles(conn, new_articles)
         conn.close()
         return
 
-    # --- Summarize ---
-    max_articles = digest_cfg.get("max_articles", 10)
-    to_summarize = relevant[:max_articles]
-    summarize_kwargs = {}
-    if settings["summarizer_prompt"]:
-        summarize_kwargs["system_prompt"] = settings["summarizer_prompt"]
-    summarize_articles(to_summarize, client, **summarize_kwargs)
-
     # --- Persist ---
     save_articles(conn, new_articles)
-    digest_date_str = today.isoformat()
-    for article in to_summarize:
-        if article.full_summary:
-            save_summary(conn, article.url, article.full_summary, digest_date_str)
 
-    # --- Build & publish digest ---
-    digest_md = build_digest(to_summarize, today, max_articles, country=country)
+    # --- Build narrative digest ---
+    logger.info(f"Generating narrative digest from {len(relevant)} relevant articles…")
+    digest_md = build_narrative_digest(relevant, today, country=country, client=client)
     path = publish_digest_file(digest_md, today, output_dir)
 
     # --- Translate to English ---
     en_path = path.replace(".md", ".en.md")
     try:
         logger.info("Translating digest to English…")
-        en_md = translate_digest(digest_md, client)
+        en_md = translate_digest(digest_md, client, source_language=settings["source_language"])
         with open(en_path, "w", encoding="utf-8") as f:
             f.write(en_md)
         logger.info(f"English digest saved to {en_path}")

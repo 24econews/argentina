@@ -1,81 +1,90 @@
-"""Build the daily Markdown digest from summarized articles."""
+"""Build the daily Bloomberg-style narrative digest using Claude."""
 
-from collections import defaultdict
 from datetime import date
 from typing import List
 
+import anthropic
+
 from ingestion.rss_fetcher import Article
 
-_STRINGS = {
-    "argentina": {
-        "header": "Digest Económico Argentina",
-        "sources_heading": "Fuentes",
-        "summary_line": lambda n_art, n_src: f"*{n_art} artículos seleccionados de {n_src} fuentes*",
-        "article_count": lambda n: f"{n} artículo{'s' if n > 1 else ''}",
-        "published": "Publicado",
-        "footer": lambda d: f"*Digest generado automáticamente el {d}*",
-    },
-    "brazil": {
-        "header": "Digest Econômico Brasil",
-        "sources_heading": "Fontes",
-        "summary_line": lambda n_art, n_src: f"*{n_art} artigos selecionados de {n_src} fonte{'s' if n_src > 1 else ''}*",
-        "article_count": lambda n: f"{n} artigo{'s' if n > 1 else ''}",
-        "published": "Publicado",
-        "footer": lambda d: f"*Digest gerado automaticamente em {d}*",
-    },
+_TITLES = {
+    "argentina": "Argentina: El Pulso Económico",
+    "brazil": "Brasil: O Pulso Econômico",
 }
 
+_BYLINES = {
+    "argentina": "Análisis generado con IA",
+    "brazil": "Análise gerada com IA",
+}
 
-def build_digest(
+_LANGUAGES = {
+    "argentina": "Spanish",
+    "brazil": "Portuguese",
+}
+
+_COUNTRY_NAMES = {
+    "argentina": "Argentina",
+    "brazil": "Brazil",
+}
+
+SYSTEM_PROMPT = (
+    "You are a senior financial journalist writing for an audience of "
+    "sophisticated investors and business executives. Your style is "
+    "analytical, precise and authoritative — like Bloomberg or the "
+    "Financial Times. You write in clear, confident prose. No bullet "
+    "points. No headers within the article. No filler phrases."
+)
+
+
+def build_narrative_digest(
     articles: List[Article],
     digest_date: date,
-    max_articles: int = 10,
     country: str = "argentina",
+    client: anthropic.Anthropic = None,
 ) -> str:
-    """Compile a Markdown digest grouped by news source."""
-    strings = _STRINGS.get(country, _STRINGS["argentina"])
-    articles = articles[:max_articles]
+    """Generate a Bloomberg-style narrative digest from filtered articles via Claude."""
+    title = _TITLES.get(country, _TITLES["argentina"])
+    byline = _BYLINES.get(country, _BYLINES["argentina"])
+    language = _LANGUAGES.get(country, "Spanish")
+    country_name = _COUNTRY_NAMES.get(country, country.capitalize())
+    date_str = digest_date.isoformat()
 
-    by_source: dict[str, List[Article]] = defaultdict(list)
+    articles_text = _format_articles(articles)
+
+    user_prompt = f"""Based on the following news articles from {country_name} today, write a single cohesive economic and business narrative of 600-800 words.
+
+Requirements:
+- Start with a strong lede that captures the dominant economic theme of the day
+- Weave the most important stories together into flowing, connected prose
+- Integrate market data (exchange rates, indices, risk indicators) naturally
+- Group related themes: fiscal policy, markets, trade, industry, etc.
+- End with a forward-looking paragraph on what to watch next
+- Write in {language}: Spanish for Argentina, Portuguese for Brazil
+- Do not list articles separately — this must read as one unified piece
+- Attribute key facts to their sources naturally within the text
+
+Articles:
+{articles_text}"""
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=2048,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    narrative = response.content[0].text.strip()
+
+    return f"# {title} — {date_str}\n\n*{byline} | {date_str}*\n\n{narrative}"
+
+
+def _format_articles(articles: List[Article]) -> str:
+    parts = []
     for article in articles:
-        by_source[article.source].append(article)
-
-    lines: List[str] = []
-
-    lines.append(f"# {strings['header']} — {digest_date.strftime('%d de %B de %Y')}")
-    lines.append("")
-    lines.append(strings["summary_line"](len(articles), len(by_source)))
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-
-    lines.append(f"## {strings['sources_heading']}")
-    lines.append("")
-    for source in sorted(by_source):
-        count = len(by_source[source])
-        anchor = source.lower().replace(" ", "-")
-        lines.append(f"- [{source}](#{anchor}) ({strings['article_count'](count)})")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-
-    for source in sorted(by_source):
-        lines.append(f"## {source}")
-        lines.append("")
-        for article in by_source[source]:
-            lines.append(f"### [{article.title}]({article.url})")
-            lines.append("")
-            if article.full_summary:
-                lines.append(article.full_summary)
-            elif article.summary:
-                lines.append(article.summary)
-            lines.append("")
-            pub = article.published_at.strftime("%d/%m/%Y %H:%M")
-            lines.append(f"*{strings['published']}: {pub}*")
-            lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    lines.append(strings["footer"](digest_date.isoformat()))
-
-    return "\n".join(lines)
+        content = article.full_summary or article.content or article.summary or ""
+        parts.append(
+            f"SOURCE: {article.source}\n"
+            f"HEADLINE: {article.title}\n"
+            f"CONTENT: {content[:2000]}\n"
+            "---"
+        )
+    return "\n".join(parts)
