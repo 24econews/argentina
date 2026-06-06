@@ -41,11 +41,19 @@ jobs:
 - name: Debug - show load_config function
         run: sed -n '78,88p' scheduler/daily_pipeline.py
 
+- name: Debug paths
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "PWD=$(pwd)"
+          ls config_brazil.yaml || echo "NOT FOUND"
+          sed -n '80,86p' scheduler/daily_pipeline.py
+
       - name: Run Brazil pipeline
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           echo "::group::Brazil pipeline"
+          cd $GITHUB_WORKSPACE
           python scheduler/daily_pipeline.py --country brazil
           echo "::endgroup::"
 
