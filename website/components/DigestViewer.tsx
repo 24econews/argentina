@@ -15,7 +15,7 @@ function NarrativeContent({ rawContent }: { rawContent: string }) {
   const paragraphs = rawContent
     .split('\n\n')
     .map((p) => p.trim())
-    .filter((p) => p && !p.startsWith('#'))
+    .filter((p) => p && !p.startsWith('#') && !p.startsWith('>') && !/^\*[^*]+\*$/.test(p))
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8">
