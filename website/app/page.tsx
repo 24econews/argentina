@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { countries, getActiveCountries, type Country } from '@/lib/countries'
 import { getCountryDigests, getDigest, formatDate, type DigestContent } from '@/lib/digests'
+import HeroRotator from '@/components/HeroRotator'
 
 function extractTeaser(rawContent: string): string {
   const lines = rawContent.replace(/^>\s*TITLE:.*$/m, '').split('\n')
@@ -55,46 +56,11 @@ export default async function HomePage() {
     })
     .sort((a, b) => b.content.date.localeCompare(a.content.date))
 
-  const leadEntry = allWithContent[0] ?? null
-
   return (
     <div className="bg-white">
 
-      {/* ── HERO / LEAD STORY ── */}
-      {leadEntry && (
-        <section className="bg-white border-b border-slate-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-            <div className="flex items-center gap-8 md:gap-16">
-              {/* Left: text */}
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-bold uppercase tracking-widest text-red-600 mb-4 block">
-                  {leadEntry.country.flag}&nbsp; {leadEntry.country.name}
-                </span>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-slate-900 mb-4">
-                  {leadEntry.title || 'Read Today\'s Analysis'}
-                </h1>
-                <p className="text-slate-500 text-sm mb-8">
-                  {formatDate(leadEntry.content.date)}
-                </p>
-                <Link
-                  href={`/${leadEntry.country.slug}/${leadEntry.content.date}`}
-                  className="inline-block bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-6 py-3 transition-colors"
-                >
-                  Read Full Analysis →
-                </Link>
-              </div>
-              {/* Right: large flag */}
-              <div
-                className="hidden sm:block shrink-0 leading-none select-none"
-                style={{ fontSize: '10rem' }}
-                aria-hidden="true"
-              >
-                {leadEntry.country.flag}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ── HERO / LEAD STORY — randomly rotates between countries on each load ── */}
+      {allWithContent.length > 0 && <HeroRotator items={allWithContent} />}
 
       {/* ── TODAY'S BRIEFINGS ── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
