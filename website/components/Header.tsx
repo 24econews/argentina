@@ -14,33 +14,44 @@ export default function Header() {
     { label: 'Search', href: '/search' },
   ]
 
+  function isActive(href: string) {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href.replace('/#countries', ''))
+  }
+
   return (
-    <header className="bg-slate-900 text-white shadow-lg">
+    <header className="bg-[#0f172a] text-white shadow-lg">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
         {/* Logo */}
         <Link
           href="/"
-          className="text-xl font-bold tracking-tight shrink-0 hover:text-blue-400 transition-colors"
+          className="text-xl font-bold tracking-tight shrink-0 hover:text-slate-300 transition-colors"
         >
           24EcoNews
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1 flex-1">
           {navLinks.map(({ label, href }) => (
             <Link
               key={href}
               href={href}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === href || (href !== '/' && pathname.startsWith(href.replace('/#countries', '')))
-                  ? 'text-white bg-slate-800'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                isActive(href)
+                  ? 'text-white border-red-600'
+                  : 'text-slate-300 hover:text-white border-transparent'
               }`}
             >
               {label}
             </Link>
           ))}
         </nav>
+
+        {/* Updated Daily badge */}
+        <span className="hidden md:inline-flex items-center px-2.5 py-1 bg-red-600 text-white text-xs font-bold uppercase tracking-widest shrink-0">
+          Updated Daily
+        </span>
 
         {/* Mobile menu button */}
         <button
@@ -66,7 +77,11 @@ export default function Header() {
               key={href}
               href={href}
               onClick={() => setMenuOpen(false)}
-              className="block px-6 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+              className={`block px-6 py-3 text-sm font-medium transition-colors ${
+                isActive(href)
+                  ? 'text-white border-l-2 border-red-600 bg-slate-700'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
+              }`}
             >
               {label}
             </Link>
