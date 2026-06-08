@@ -60,7 +60,7 @@ export async function getCountryDigests(country: string): Promise<DigestMeta[]> 
     digestFiles.map(async (f) => {
       const date = f.name.replace('digest_', '').replace('.md', '')
       const content = await fetchText(`${RAW_BASE}/${digestDir(country)}/${f.name}`)
-      if (!content) return { date, country, title: 'Latest Economic Analysis', articleCount: 0, sources: [], firstHeadline: '' }
+      if (!content) return { date, country, title: '', articleCount: 0, sources: [], firstHeadline: '' }
       return parseDigestMetadata(content, date, country)
     })
   )
@@ -117,7 +117,8 @@ export function parseDigestMetadata(
   country: string
 ): DigestMeta {
   const titleLineMatch = content.match(/^> TITLE: (.+)$/m)
-  const title = titleLineMatch ? titleLineMatch[1].trim() : 'Latest Economic Analysis'
+  const title = titleLineMatch ? titleLineMatch[1].trim() : ''
+  if (!titleLineMatch) console.log(`[digests] no TITLE line found in ${country}/${date}`)
 
   const countMatch = content.match(/\*(\d+)\s+(?:artículos|artigos|articles)/)
   const articleCount = countMatch ? parseInt(countMatch[1]) : 0

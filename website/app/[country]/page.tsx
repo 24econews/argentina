@@ -68,7 +68,7 @@ export default async function CountryPage({
                         {formatDate(digest.date)}:
                       </time>{' '}
                       <span className="font-semibold group-hover:text-blue-600 transition-colors">
-                        {digest.title}
+                        {digest.title || 'Read Today\'s Analysis'}
                       </span>
                     </p>
                   </div>

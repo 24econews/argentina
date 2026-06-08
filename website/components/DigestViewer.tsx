@@ -156,7 +156,7 @@ export default function DigestViewer({
             {countryFlag}&nbsp; {countryName}
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight tracking-tight mb-4">
-            {digest.title}
+            {digest.title || 'Economic Analysis'}
           </h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
             <span>{digest.date}</span>

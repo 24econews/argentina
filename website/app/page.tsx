@@ -67,7 +67,7 @@ export default async function HomePage() {
                   {leadEntry.country.flag}&nbsp; {leadEntry.country.name}
                 </span>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-slate-900 mb-4">
-                  {leadEntry.content.title}
+                  {leadEntry.content.title || 'Read Today\'s Analysis'}
                 </h1>
                 <p className="text-slate-500 text-sm mb-8">
                   {formatDate(leadEntry.content.date)}
@@ -111,7 +111,7 @@ export default async function HomePage() {
                   {c.flag}&nbsp; {c.name}
                 </span>
                 <h3 className="text-xl font-bold text-slate-900 leading-snug mb-2 line-clamp-2">
-                  {content.title}
+                  {content.title || 'Read Today\'s Analysis'}
                 </h3>
                 <p className="text-xs text-slate-500 mb-4">{formatDate(content.date)}</p>
                 {teaser && (
@@ -167,11 +167,11 @@ export default async function HomePage() {
                   {meta && (
                     <p className="text-xs text-slate-500 mt-1">Latest: {formatDate(meta.date)}</p>
                   )}
-                  {meta?.title && (
+                  {meta?.title ? (
                     <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-snug">
                       {meta.title}
                     </p>
-                  )}
+                  ) : null}
                 </Link>
               )
             })}
