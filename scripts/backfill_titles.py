@@ -112,6 +112,14 @@ def main() -> None:
             content = f.read()
 
         if has_title(content):
+            # Still mirror title to .en.md in case it's missing there
+            title_match = next(
+                (line[len("> TITLE:"):].strip() for line in content.splitlines()[:5] if line.startswith("> TITLE:")),
+                None,
+            )
+            if title_match:
+                en_path = filepath.replace(".md", ".en.md")
+                process_en_file(en_path, title_match)
             print(f"  skip {filename} (already has title)")
             skipped += 1
             continue
