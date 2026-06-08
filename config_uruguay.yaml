@@ -1,0 +1,25 @@
+country:
+  slug: uruguay
+  name: Uruguay
+  digest_header: "Uruguay: El Pulso Económico"
+
+digest:
+  max_articles: 10
+  output_dir: digests/uruguay/
+  db_path: economy_uruguay.db
+
+rss_feeds:
+  # Direct feeds
+  - name: El País Uruguay
+    url: https://www.elpais.com.uy/rss/
+
+  # El Observador and La Diaria don't expose RSS directly;
+  # using Google News search to aggregate their economic coverage
+  - name: El Observador
+    url: https://news.google.com/rss/search?q=economia+site:elobservador.com.uy&hl=es-419&gl=UY&ceid=UY:es-419
+
+  - name: La Diaria
+    url: https://news.google.com/rss/search?q=site:ladiaria.com.uy+finanzas+economia&hl=es-419&gl=UY&ceid=UY:es-419
+
+  - name: Uruguay Economía
+    url: https://news.google.com/rss/search?q=economia+uruguay&hl=es-419&gl=UY&ceid=UY:es-419

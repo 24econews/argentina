@@ -24,7 +24,14 @@ export const countries: Country[] = [
     active: true,
     sources: ['Folha de S.Paulo', 'Valor Econômico', 'InfoMoney'],
   },
-  { slug: 'uruguay', name: 'Uruguay', flag: '🇺🇾', language: 'es', active: false, sources: [] },
+  {
+    slug: 'uruguay',
+    name: 'Uruguay',
+    flag: '🇺🇾',
+    language: 'es',
+    active: true,
+    sources: ['El País Uruguay', 'El Observador', 'La Diaria'],
+  },
   { slug: 'paraguay', name: 'Paraguay', flag: '🇵🇾', language: 'es', active: false, sources: [] },
   {
     slug: 'chile',

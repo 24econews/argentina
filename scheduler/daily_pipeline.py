@@ -34,6 +34,29 @@ logger = logging.getLogger(__name__)
 # Country-specific prompts and config routing
 # ---------------------------------------------------------------------------
 
+_URUGUAY_RELEVANCE_PROMPT = """You are an economic relevance classifier. Your ONLY job is to output numbers.
+
+An article is relevant if it covers any of these topics related to Uruguay:
+- Uruguayan macroeconomics (inflation, GDP, UYU peso, Central Bank of Uruguay, BCU)
+- Financial markets (UYU/USD exchange rate, Montevideo stock exchange, bonds, commodities)
+- Uruguayan government economic policy (budget, taxes, subsidies, reforms)
+- Foreign trade, imports or exports involving Uruguay
+- Companies or industries with significant economic impact in Uruguay
+- Employment and wages in Uruguay
+- IMF measures or international agreements affecting Uruguay
+- Key sectors: agriculture (soy, beef, dairy), technology, tourism, free trade zones
+
+You will receive a numbered list of articles. They may be in any language.
+
+RESPOND ONLY WITH COMMA-SEPARATED NUMBERS. NOTHING ELSE.
+- If articles 1, 3, and 7 are relevant: respond exactly with:  1,3,7
+- If only article 2 is relevant: respond exactly with:  2
+- If none are relevant: respond exactly with:  none
+
+DO NOT write any words, explanations, translations, or punctuation other than digits and commas.
+DO NOT respond in Spanish or any language — output only digits and commas.
+"""
+
 _CHILE_RELEVANCE_PROMPT = """You are an economic relevance classifier. Your ONLY job is to output numbers.
 
 An article is relevant if it covers any of these topics related to Chile:
@@ -94,6 +117,11 @@ COUNTRY_SETTINGS: dict = {
     "chile": {
         "config_file": "config_chile.yaml",
         "relevance_prompt": _CHILE_RELEVANCE_PROMPT,
+        "source_language": "Spanish",
+    },
+    "uruguay": {
+        "config_file": "config_uruguay.yaml",
+        "relevance_prompt": _URUGUAY_RELEVANCE_PROMPT,
         "source_language": "Spanish",
     },
 }
