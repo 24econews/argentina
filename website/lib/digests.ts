@@ -89,8 +89,12 @@ export async function getDigest(
   // .md is authoritative for metadata (title always present after backfill)
   const meta = parseDigestMetadata(mdContent ?? displayContent, date, country)
   const articles = parseArticles(displayContent)
+  const rawContent = displayContent.replace(
+    /^> (?:IMAGE_URL|IMAGE_THUMB|IMAGE_CREDIT|IMAGE_CREDIT_URL|TITLE): .*\n?/gm,
+    ''
+  )
   console.log(`[getDigest] ${country}/${date} title="${meta.title}"`)
-  return { ...meta, articles, rawContent: displayContent }
+  return { ...meta, articles, rawContent }
 }
 
 export async function searchDigests(
