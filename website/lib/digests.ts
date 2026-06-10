@@ -3,7 +3,7 @@ import { getActiveCountries } from './countries'
 const REPO = '24econews/argentina'
 const API_BASE = `https://api.github.com/repos/${REPO}/contents`
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main`
-const FETCH_OPTS = { next: { revalidate: 3600 } } as const
+const FETCH_OPTS = { next: { revalidate: 300 } } as const
 
 function digestDir(country: string): string {
   return country === 'argentina' ? 'digests' : `digests/${country}`
